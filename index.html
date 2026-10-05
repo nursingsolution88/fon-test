@@ -40,7 +40,7 @@
     .pal-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-height: 380px; overflow-y: auto; padding: 4px; }
     .pal-btn { height: 36px; border-radius: 4px; font-size: 12px; font-weight: 600; border: 1px solid #cbd5e1; background: #f8fafc; color: #475569; }
     
-    /* Palette Status */
+    /* Palette Status Colors */
     .p-answered { background: #16a34a !important; color: white !important; border: none; }
     .p-review { background: #7c3aed !important; color: white !important; border: none; }
     .p-unanswered { background: #e2e8f0 !important; color: #334155 !important; }
@@ -116,16 +116,16 @@
 
   <script>
     /* =========================================================
-       🔗 Google Apps Script Permanent Web App URL
+       🔗 Google Apps Script Permanent Web App URL (Updated)
        ========================================================= */
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzaT5boCG8Aet_pzaX2idoc0qWyHNQeWT7NHysMDEQsCxKfVCKtI6hTiuuDOoXrswmjyQ/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxq7W2ORxQqeilBvCfxcLoPjV0cxzdsgTuoj_tIg80ZBTuY3DJ5QbmB5N9xK-Dut_Nkaw/exec";
 
-    // 100 प्रश्नों का मास्टर डेटा (यहाँ आप अपने 100 सवाल बदल सकते हैं)
+    // 100 प्रश्नों का मास्टर डेटा
     const questionsList = Array.from({ length: 100 }, (_, i) => ({
       id: i + 1,
       q: `प्रश्न संख्या ${i + 1}: यहाँ आपका नर्सिंग या सामान्य ज्ञान का प्रश्न आएगा?`,
       options: ["विकल्प (A)", "विकल्प (B)", "विकल्प (C)", "विकल्प (D)"],
-      correct: 0 // सही विकल्प का इंडेक्स (0 = A, 1 = B, 2 = C, 3 = D)
+      correct: 0 // 0 = A, 1 = B, 2 = C, 3 = D
     }));
 
     let currentQ = 0;
@@ -133,7 +133,7 @@
     let reviewList = new Array(100).fill(false);
     let student = { name: "", roll: "" };
     let timerId = null;
-    let remainingSeconds = 120 * 60; // 120 मिनट (2 घंटे)
+    let remainingSeconds = 120 * 60; // 120 मिनट
     let isTerminatedOrSubmitted = false;
 
     /* =========================================================
@@ -148,7 +148,7 @@
         }
       });
 
-      // 2. मिनिमाइज या टैब स्विच डिटेक्शन
+      // 2. स्क्रीन मिनिमाइज या टैब स्विच डिटेक्शन
       document.addEventListener("visibilitychange", function () {
         if (document.hidden && !isTerminatedOrSubmitted) {
           terminateExamDirectly("Terminated - Minimized or Tab Switched");
@@ -177,7 +177,7 @@
     }
 
     /* =========================================================
-       🚀 परीक्षा सत्र
+       🚀 परीक्षा प्रक्रिया
        ========================================================= */
     function startExamSession() {
       const name = document.getElementById("stuName").value.trim();
@@ -376,7 +376,7 @@
             </div>
           `;
         } else {
-          box.innerHTML = `<div style="color:#dc2626; padding:10px; background:#fee2e2; border-radius:6px;">❌ ${res.message}</div>`;
+          box.innerHTML = `<div style="color:#dc2626; padding:10px; background:#fee2e2; border-radius:4px;">❌ ${res.message}</div>`;
         }
       })
       .catch(() => {
