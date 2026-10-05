@@ -8,7 +8,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { background: #f1f5f9; user-select: none; -webkit-user-select: none; }
 
-    /* Top Bar */
+    /* Header Bar */
     .top-header { background: #0f172a; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; }
     .timer-box { background: #ef4444; color: white; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 15px; letter-spacing: 1px; }
 
@@ -16,7 +16,7 @@
     .exam-wrapper { display: flex; flex-direction: column; max-width: 1200px; margin: 15px auto; padding: 10px; gap: 15px; }
     @media (min-width: 820px) { .exam-wrapper { flex-direction: row; } }
 
-    /* Left: Question Box */
+    /* Question Panel */
     .exam-box { flex: 2; background: #fff; border-radius: 8px; padding: 22px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.07); }
     .q-meta { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; color: #2563eb; margin-bottom: 12px; }
     .q-title { font-size: 16px; font-weight: 600; color: #1e293b; line-height: 1.5; margin-bottom: 20px; }
@@ -26,7 +26,7 @@
     .opt-item:hover { background: #f8fafc; border-color: #cbd5e1; }
     .opt-item input[type="radio"] { transform: scale(1.2); accent-color: #2563eb; }
 
-    /* Buttons */
+    /* Control Buttons */
     .btn-row { display: flex; gap: 8px; margin-top: 25px; flex-wrap: wrap; }
     button { padding: 10px 16px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; }
     .btn-next { background: #2563eb; color: #fff; }
@@ -35,12 +35,12 @@
     .btn-review { background: #7c3aed; color: #fff; }
     .btn-submit { background: #16a34a; color: #fff; margin-left: auto; }
 
-    /* Right: Question Palette */
+    /* Palette Box */
     .palette-box { flex: 1; background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.07); height: fit-content; }
     .pal-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-height: 380px; overflow-y: auto; padding: 4px; }
     .pal-btn { height: 36px; border-radius: 4px; font-size: 12px; font-weight: 600; border: 1px solid #cbd5e1; background: #f8fafc; color: #475569; }
     
-    /* Palette Status Colors */
+    /* Palette Status */
     .p-answered { background: #16a34a !important; color: white !important; border: none; }
     .p-review { background: #7c3aed !important; color: white !important; border: none; }
     .p-unanswered { background: #e2e8f0 !important; color: #334155 !important; }
@@ -88,7 +88,7 @@
     <div class="timer-box" id="timeBox">120:00</div>
   </div>
 
-  <!-- Exam Container -->
+  <!-- Exam Main Interface -->
   <div class="exam-wrapper" id="examScreen" style="display: none;">
     <div class="exam-box">
       <div class="q-meta">
@@ -116,16 +116,16 @@
 
   <script>
     /* =========================================================
-       🔗 Google Apps Script Permanent Web App URL (Updated)
+       🔗 आपका लाइव Apps Script URL
        ========================================================= */
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxq7W2ORxQqeilBvCfxcLoPjV0cxzdsgTuoj_tIg80ZBTuY3DJ5QbmB5N9xK-Dut_Nkaw/exec";
 
-    // 100 प्रश्नों का मास्टर डेटा
+    // 100 प्रश्नों का डेटा (अपने 100 सवाल यहाँ रिप्लेस करें)
     const questionsList = Array.from({ length: 100 }, (_, i) => ({
       id: i + 1,
       q: `प्रश्न संख्या ${i + 1}: यहाँ आपका नर्सिंग या सामान्य ज्ञान का प्रश्न आएगा?`,
       options: ["विकल्प (A)", "विकल्प (B)", "विकल्प (C)", "विकल्प (D)"],
-      correct: 0 // 0 = A, 1 = B, 2 = C, 3 = D
+      correct: 0 // Index: 0 = A, 1 = B, 2 = C, 3 = D
     }));
 
     let currentQ = 0;
@@ -140,7 +140,7 @@
        🛑 सख्त बैक-बटन और स्क्रीन सिक्योरिटी ट्रैप
        ========================================================= */
     function enforceSecurityLocks() {
-      // 1. मोबाइल बैक बटन डिटेक्शन
+      // 1. मोबाइल बैक बटन ट्रैप
       window.history.pushState({ lock: true }, "", "");
       window.addEventListener("popstate", function (e) {
         if (!isTerminatedOrSubmitted) {
@@ -148,7 +148,7 @@
         }
       });
 
-      // 2. स्क्रीन मिनिमाइज या टैब स्विच डिटेक्शन
+      // 2. स्क्रीन मिनिमाइज / टैब स्विच ट्रैप
       document.addEventListener("visibilitychange", function () {
         if (document.hidden && !isTerminatedOrSubmitted) {
           terminateExamDirectly("Terminated - Minimized or Tab Switched");
@@ -168,7 +168,7 @@
       isTerminatedOrSubmitted = true;
       clearInterval(timerId);
 
-      // गूगल शीट में टर्मिनेशन डेटा रिकॉर्ड करना
+      // Google Sheet में टर्मिनेशन स्टेटस भेजना
       sendToGoogleSheet("Terminated", reason, { score: 0, correct: 0, wrong: 0, unattempted: 100 });
 
       alert("⚠️ सख्त नियम उल्लंघन!\nआपने टेस्ट के दौरान मोबाइल का बैक बटन दबाया या स्क्रीन से बाहर गए। आपकी परीक्षा तुरंत रद्द कर दी गई है।");
@@ -177,7 +177,7 @@
     }
 
     /* =========================================================
-       🚀 परीक्षा प्रक्रिया
+       🚀 परीक्षा सत्र
        ========================================================= */
     function startExamSession() {
       const name = document.getElementById("stuName").value.trim();
@@ -307,7 +307,7 @@
       // स्कोर गणना (+1 सही, -0.33 गलत)
       const totalScore = (correct * 1 - wrong * 0.33).toFixed(2);
 
-      // डेटा बैकएंड Google Sheet में भेजना
+      // डेटा Google Sheet में भेजना
       sendToGoogleSheet("Completed", trigger, {
         score: totalScore, correct, wrong, unattempted
       });
@@ -341,7 +341,7 @@
     }
 
     /* =========================================================
-       📊 रिजल्ट जांच विंडो (जब एडमिन रिलीज करेगा)
+       📊 रिजल्ट जांच विंडो (GET Request द्वारा सीधा फेच)
        ========================================================= */
     function toggleResultModal(show) {
       document.getElementById("resultModal").style.display = show ? "flex" : "none";
@@ -355,33 +355,34 @@
 
       box.innerHTML = "जांच की जा रही है...";
 
-      fetch(SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "CHECK_RESULT", roll: roll })
-      })
-      .then(res => res.json())
-      .then(res => {
-        if (res.status === "locked") {
-          box.innerHTML = `<div style="color:#d97706; font-weight:600; padding:10px; background:#fef3c7; border-radius:6px;">🔒 ${res.message}</div>`;
-        } else if (res.status === "approved") {
-          const d = res.data;
-          box.innerHTML = `
-            <div style="background:#ecfdf5; border:1px solid #10b981; padding:14px; border-radius:6px;">
-              <p><b>परीक्षार्थी:</b> ${d.name}</p>
-              <p><b>रोल नंबर:</b> ${d.roll}</p>
-              <p><b>कुल स्कोर:</b> <span style="font-size:16px; color:#15803d; font-weight:bold;">${d.score} / 100</span></p>
-              <p><b>सही उत्तर:</b> ${d.correct} | <b>गलत उत्तर:</b> ${d.wrong}</p>
-              <p><b>छोड़े गए प्रश्न:</b> ${d.unattempted}</p>
-            </div>
-          `;
-        } else {
-          box.innerHTML = `<div style="color:#dc2626; padding:10px; background:#fee2e2; border-radius:4px;">❌ ${res.message}</div>`;
-        }
-      })
-      .catch(() => {
-        box.innerHTML = `<div style="color:#dc2626;">सर्वर से संपर्क नहीं हो पाया। कृपया बाद में प्रयास करें।</div>`;
-      });
+      // GET Request द्वारा परिणाम फेच
+      const fetchUrl = `${SCRIPT_URL}?action=CHECK_RESULT&roll=${encodeURIComponent(roll)}`;
+
+      fetch(fetchUrl)
+        .then(res => res.json())
+        .then(res => {
+          if (res.status === "locked") {
+            box.innerHTML = `<div style="color:#d97706; font-weight:600; padding:10px; background:#fef3c7; border-radius:6px;">🔒 ${res.message}</div>`;
+          } else if (res.status === "approved") {
+            const d = res.data;
+            box.innerHTML = `
+              <div style="background:#ecfdf5; border:1px solid #10b981; padding:14px; border-radius:6px; line-height:1.6;">
+                <p><b>परीक्षार्थी:</b> ${d.name}</p>
+                <p><b>रोल नंबर:</b> ${d.roll}</p>
+                <p><b>स्थिति:</b> ${d.status}</p>
+                <p><b>कुल स्कोर:</b> <span style="font-size:18px; color:#15803d; font-weight:bold;">${d.score} / 100</span></p>
+                <p><b>सही उत्तर:</b> ${d.correct} | <b>गलत उत्तर:</b> ${d.wrong}</p>
+                <p><b>छोड़े गए प्रश्न:</b> ${d.unattempted}</p>
+                <p><b>समय लगा:</b> ${d.timeTaken} मिनट</p>
+              </div>
+            `;
+          } else {
+            box.innerHTML = `<div style="color:#dc2626; padding:10px; background:#fee2e2; border-radius:6px;">❌ ${res.message}</div>`;
+          }
+        })
+        .catch(err => {
+          box.innerHTML = `<div style="color:#dc2626; padding:10px; background:#fee2e2; border-radius:6px;">सर्वर से संपर्क नहीं हो पाया। कृपया इंटरनेट कनेक्शन जांचें।</div>`;
+        });
     }
   </script>
 </body>
