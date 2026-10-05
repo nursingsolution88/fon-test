@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Strict 100 Questions Online Test Portal</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background: #f1f5f9; user-select: none; -webkit-user-select: none; }
+
+    /* Top Bar */
+    .top-header { background: #0f172a; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; }
+    .timer-box { background: #ef4444; color: white; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 15px; letter-spacing: 1px; }
+
+    /* Layout */
+    .exam-wrapper { display: flex; flex-direction: column; max-width: 1200px; margin: 15px auto; padding: 10px; gap: 15px; }
+    @media (min-width: 820px) { .exam-wrapper { flex-direction: row; } }
+
+    /* Left: Question Box */
+    .exam-box { flex: 2; background: #fff; border-radius: 8px; padding: 22px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.07); }
+    .q-meta { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; color: #2563eb; margin-bottom: 12px; }
+    .q-title { font-size: 16px; font-weight: 600; color: #1e293b; line-height: 1.5; margin-bottom: 20px; }
+
+    .opt-container { display: flex; flex-direction: column; gap: 10px; }
+    .opt-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1.5px solid #e2e8f0; border-radius: 6px; cursor: pointer; transition: 0.15s ease-in-out; }
+    .opt-item:hover { background: #f8fafc; border-color: #cbd5e1; }
+    .opt-item input[type="radio"] { transform: scale(1.2); accent-color: #2563eb; }
+
+    /* Buttons */
+    .btn-row { display: flex; gap: 8px; margin-top: 25px; flex-wrap: wrap; }
+    button { padding: 10px 16px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    .btn-next { background: #2563eb; color: #fff; }
+    .btn-prev { background: #e2e8f0; color: #334155; }
+    .btn-clear { background: #cbd5e1; color: #334155; }
+    .btn-review { background: #7c3aed; color: #fff; }
+    .btn-submit { background: #16a34a; color: #fff; margin-left: auto; }
+
+    /* Right: Question Palette */
+    .palette-box { flex: 1; background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.07); height: fit-content; }
+    .pal-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-height: 380px; overflow-y: auto; padding: 4px; }
+    .pal-btn { height: 36px; border-radius: 4px; font-size: 12px; font-weight: 600; border: 1px solid #cbd5e1; background: #f8fafc; color: #475569; }
+    
+    /* Palette Status */
+    .p-answered { background: #16a34a !important; color: white !important; border: none; }
+    .p-review { background: #7c3aed !important; color: white !important; border: none; }
+    .p-unanswered { background: #e2e8f0 !important; color: #334155 !important; }
+
+    /* Modals */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.85); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
+    .modal-card { background: #fff; width: 92%; max-width: 420px; border-radius: 10px; padding: 25px; text-align: center; }
+    .modal-card input { width: 100%; padding: 12px; margin: 10px 0; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 15px; outline: none; }
+    .modal-card input:focus { border-color: #2563eb; }
+  </style>
+</head>
+<body>
+
+  <!-- 1. Entry / Start Modal -->
+  <div id="startModal" class="modal-overlay">
+    <div class="modal-card">
+      <h2 style="color: #0f172a; margin-bottom: 8px;">ऑनलाइन टेस्ट पोर्टल</h2>
+      <p style="font-size: 13px; color: #64748b; line-height: 1.4; margin-bottom: 15px;">
+        ⚠️ <b>सख्त निर्देश:</b> परीक्षा के दौरान मोबाइल का बैक बटन दबाने या विंडो बंद करने पर परीक्षा तुरंत समाप्त हो जाएगी। परीक्षा समाप्त होने पर कोई भी अंक या सही उत्तर नहीं दिखाया जाएगा।
+      </p>
+      <input type="text" id="stuName" placeholder="अपना पूरा नाम दर्ज करें" required>
+      <input type="tel" id="stuRoll" placeholder="रोल नंबर / मोबाइल नंबर" required>
+      <button class="btn-next" style="width: 100%; margin-top: 6px;" onclick="startExamSession()">परीक्षा शुरू करें</button>
+      
+      <div style="margin: 18px 0 12px; border-top: 1px solid #e2e8f0;"></div>
+      <button style="background: #334155; color: white; width: 100%;" onclick="toggleResultModal(true)">घोषित रिजल्ट चेक करें</button>
+    </div>
+  </div>
+
+  <!-- 2. Result Check Modal -->
+  <div id="resultModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <h3 style="color: #0f172a; margin-bottom: 8px;">परीक्षा परिणाम जांचें</h3>
+      <p style="font-size: 13px; color: #64748b; margin-bottom: 12px;">अपना पंजीकृत मोबाइल / रोल नंबर दर्ज करें:</p>
+      <input type="tel" id="checkRoll" placeholder="रोल / मोबाइल नंबर">
+      <button class="btn-next" style="width: 100%;" onclick="fetchResultFromSheet()">परिणाम देखें</button>
+      <div id="resultContainer" style="margin-top: 15px; font-size: 14px; text-align: left;"></div>
+      <button class="btn-clear" style="width: 100%; margin-top: 12px;" onclick="toggleResultModal(false)">वापस जाएं</button>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="top-header">
+    <div id="userDisplay" style="font-weight: 600; font-size: 14px;">परीक्षार्थी: ---</div>
+    <div class="timer-box" id="timeBox">120:00</div>
+  </div>
+
+  <!-- Exam Container -->
+  <div class="exam-wrapper" id="examScreen" style="display: none;">
+    <div class="exam-box">
+      <div class="q-meta">
+        <span id="qIndexLabel">Question 1 / 100</span>
+        <span>Marking: +1, -0.33</span>
+      </div>
+      <div class="q-title" id="qTitle">सवाल लोड हो रहा है...</div>
+      <div class="opt-container" id="optBox"></div>
+
+      <div class="btn-row">
+        <button class="btn-prev" onclick="changeQuestion(-1)">Previous</button>
+        <button class="btn-clear" onclick="clearOption()">Clear</button>
+        <button class="btn-review" onclick="toggleReviewMark()">Mark Review</button>
+        <button class="btn-next" onclick="changeQuestion(1)">Save & Next</button>
+        <button class="btn-submit" onclick="submitExam(false, 'Normal Submit')">Final Submit</button>
+      </div>
+    </div>
+
+    <!-- Palette -->
+    <div class="palette-box">
+      <div style="font-weight: 600; font-size: 14px; margin-bottom: 10px; color: #1e293b;">प्रश्न तालिका (100)</div>
+      <div class="pal-grid" id="palGrid"></div>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================
+       🔗 Google Apps Script Permanent Web App URL
+       ========================================================= */
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzaT5boCG8Aet_pzaX2idoc0qWyHNQeWT7NHysMDEQsCxKfVCKtI6hTiuuDOoXrswmjyQ/exec";
+
+    // 100 प्रश्नों का मास्टर डेटा (यहाँ आप अपने 100 सवाल बदल सकते हैं)
+    const questionsList = Array.from({ length: 100 }, (_, i) => ({
+      id: i + 1,
+      q: `प्रश्न संख्या ${i + 1}: यहाँ आपका नर्सिंग या सामान्य ज्ञान का प्रश्न आएगा?`,
+      options: ["विकल्प (A)", "विकल्प (B)", "विकल्प (C)", "विकल्प (D)"],
+      correct: 0 // सही विकल्प का इंडेक्स (0 = A, 1 = B, 2 = C, 3 = D)
+    }));
+
+    let currentQ = 0;
+    let studentResponses = new Array(100).fill(null);
+    let reviewList = new Array(100).fill(false);
+    let student = { name: "", roll: "" };
+    let timerId = null;
+    let remainingSeconds = 120 * 60; // 120 मिनट (2 घंटे)
+    let isTerminatedOrSubmitted = false;
+
+    /* =========================================================
+       🛑 सख्त बैक-बटन और स्क्रीन सिक्योरिटी ट्रैप
+       ========================================================= */
+    function enforceSecurityLocks() {
+      // 1. मोबाइल बैक बटन डिटेक्शन
+      window.history.pushState({ lock: true }, "", "");
+      window.addEventListener("popstate", function (e) {
+        if (!isTerminatedOrSubmitted) {
+          terminateExamDirectly("Terminated - Back Button Pressed");
+        }
+      });
+
+      // 2. मिनिमाइज या टैब स्विच डिटेक्शन
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden && !isTerminatedOrSubmitted) {
+          terminateExamDirectly("Terminated - Minimized or Tab Switched");
+        }
+      });
+
+      // 3. पेज रिफ्रेश लॉक
+      window.addEventListener("beforeunload", function (e) {
+        if (!isTerminatedOrSubmitted) {
+          e.preventDefault();
+          e.returnValue = "";
+        }
+      });
+    }
+
+    function terminateExamDirectly(reason) {
+      isTerminatedOrSubmitted = true;
+      clearInterval(timerId);
+
+      // गूगल शीट में टर्मिनेशन डेटा रिकॉर्ड करना
+      sendToGoogleSheet("Terminated", reason, { score: 0, correct: 0, wrong: 0, unattempted: 100 });
+
+      alert("⚠️ सख्त नियम उल्लंघन!\nआपने टेस्ट के दौरान मोबाइल का बैक बटन दबाया या स्क्रीन से बाहर गए। आपकी परीक्षा तुरंत रद्द कर दी गई है।");
+      sessionStorage.clear();
+      window.location.reload();
+    }
+
+    /* =========================================================
+       🚀 परीक्षा सत्र
+       ========================================================= */
+    function startExamSession() {
+      const name = document.getElementById("stuName").value.trim();
+      const roll = document.getElementById("stuRoll").value.trim();
+
+      if (!name || !roll) {
+        alert("कृपया अपना पूरा नाम और मोबाइल/रोल नंबर दर्ज करें!");
+        return;
+      }
+
+      student.name = name;
+      student.roll = roll;
+
+      document.getElementById("userDisplay").innerText = `परीक्षार्थी: ${name} (${roll})`;
+      document.getElementById("startModal").style.display = "none";
+      document.getElementById("examScreen").style.display = "flex";
+
+      enforceSecurityLocks();
+      createPalette();
+      renderQuestion();
+      startTimer();
+    }
+
+    function startTimer() {
+      timerId = setInterval(() => {
+        remainingSeconds--;
+        let m = Math.floor(remainingSeconds / 60);
+        let s = remainingSeconds % 60;
+        document.getElementById("timeBox").innerText = 
+          `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+        if (remainingSeconds <= 0) {
+          clearInterval(timerId);
+          submitExam(true, "Time Expired");
+        }
+      }, 1000);
+    }
+
+    function createPalette() {
+      const grid = document.getElementById("palGrid");
+      grid.innerHTML = "";
+      for (let i = 0; i < 100; i++) {
+        const btn = document.createElement("button");
+        btn.className = "pal-btn";
+        btn.id = `pal-${i}`;
+        btn.innerText = i + 1;
+        btn.onclick = () => { currentQ = i; renderQuestion(); };
+        grid.appendChild(btn);
+      }
+    }
+
+    function renderQuestion() {
+      const q = questionsList[currentQ];
+      document.getElementById("qIndexLabel").innerText = `Question ${currentQ + 1} / 100`;
+      document.getElementById("qTitle").innerText = q.q;
+
+      const optBox = document.getElementById("optBox");
+      optBox.innerHTML = "";
+
+      q.options.forEach((opt, idx) => {
+        const isChecked = studentResponses[currentQ] === idx ? "checked" : "";
+        optBox.innerHTML += `
+          <label class="opt-item">
+            <input type="radio" name="option" value="${idx}" ${isChecked} onchange="setAnswer(${idx})">
+            <span>${opt}</span>
+          </label>
+        `;
+      });
+      refreshPaletteItem(currentQ);
+    }
+
+    function setAnswer(val) {
+      studentResponses[currentQ] = val;
+      refreshPaletteItem(currentQ);
+    }
+
+    function clearOption() {
+      studentResponses[currentQ] = null;
+      renderQuestion();
+    }
+
+    function toggleReviewMark() {
+      reviewList[currentQ] = !reviewList[currentQ];
+      refreshPaletteItem(currentQ);
+    }
+
+    function refreshPaletteItem(idx) {
+      const btn = document.getElementById(`pal-${idx}`);
+      btn.className = "pal-btn";
+
+      if (reviewList[idx]) {
+        btn.classList.add("p-review");
+      } else if (studentResponses[idx] !== null) {
+        btn.classList.add("p-answered");
+      } else {
+        btn.classList.add("p-unanswered");
+      }
+    }
+
+    function changeQuestion(step) {
+      currentQ += step;
+      if (currentQ < 0) currentQ = 0;
+      if (currentQ >= 100) currentQ = 99;
+      renderQuestion();
+    }
+
+    /* =========================================================
+       🔒 फाइनल सबमिट (छात्र को कोई अंक/उत्तर नहीं दिखेगा)
+       ========================================================= */
+    function submitExam(isAuto = false, trigger = "User Click") {
+      if (!isAuto && !confirm("क्या आप वाकई परीक्षा सबमिट करना चाहते हैं?")) return;
+
+      isTerminatedOrSubmitted = true;
+      clearInterval(timerId);
+
+      let correct = 0, wrong = 0, unattempted = 0;
+      questionsList.forEach((q, i) => {
+        if (studentResponses[i] === null) {
+          unattempted++;
+        } else if (studentResponses[i] === q.correct) {
+          correct++;
+        } else {
+          wrong++;
+        }
+      });
+
+      // स्कोर गणना (+1 सही, -0.33 गलत)
+      const totalScore = (correct * 1 - wrong * 0.33).toFixed(2);
+
+      // डेटा बैकएंड Google Sheet में भेजना
+      sendToGoogleSheet("Completed", trigger, {
+        score: totalScore, correct, wrong, unattempted
+      });
+
+      // छात्र को केवल पुष्टिकरण दिखेगा
+      alert("✅ आपकी परीक्षा सफलतापूर्वक सबमिट हो गई है!\n\nपरिणाम और आंसर-की एडमिन (सर) द्वारा आधिकारिक रूप से घोषित किए जाने के बाद ही उपलब्ध कराई जाएगी।");
+      window.location.reload();
+    }
+
+    function sendToGoogleSheet(status, trigger, scores) {
+      const payload = {
+        action: "SUBMIT_TEST",
+        name: student.name,
+        roll: student.roll,
+        status: status,
+        reason: trigger,
+        score: scores.score,
+        correct: scores.correct,
+        wrong: scores.wrong,
+        unattempted: scores.unattempted,
+        timeTakenMinutes: ((120 * 60 - remainingSeconds) / 60).toFixed(1),
+        responses: JSON.stringify(studentResponses)
+      };
+
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    /* =========================================================
+       📊 रिजल्ट जांच विंडो (जब एडमिन रिलीज करेगा)
+       ========================================================= */
+    function toggleResultModal(show) {
+      document.getElementById("resultModal").style.display = show ? "flex" : "none";
+      if (!show) document.getElementById("resultContainer").innerHTML = "";
+    }
+
+    function fetchResultFromSheet() {
+      const roll = document.getElementById("checkRoll").value.trim();
+      const box = document.getElementById("resultContainer");
+      if (!roll) { alert("कृपया रोल/मोबाइल नंबर दर्ज करें!"); return; }
+
+      box.innerHTML = "जांच की जा रही है...";
+
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "CHECK_RESULT", roll: roll })
+      })
+      .then(res => res.json())
+      .then(res => {
+        if (res.status === "locked") {
+          box.innerHTML = `<div style="color:#d97706; font-weight:600; padding:10px; background:#fef3c7; border-radius:6px;">🔒 ${res.message}</div>`;
+        } else if (res.status === "approved") {
+          const d = res.data;
+          box.innerHTML = `
+            <div style="background:#ecfdf5; border:1px solid #10b981; padding:14px; border-radius:6px;">
+              <p><b>परीक्षार्थी:</b> ${d.name}</p>
+              <p><b>रोल नंबर:</b> ${d.roll}</p>
+              <p><b>कुल स्कोर:</b> <span style="font-size:16px; color:#15803d; font-weight:bold;">${d.score} / 100</span></p>
+              <p><b>सही उत्तर:</b> ${d.correct} | <b>गलत उत्तर:</b> ${d.wrong}</p>
+              <p><b>छोड़े गए प्रश्न:</b> ${d.unattempted}</p>
+            </div>
+          `;
+        } else {
+          box.innerHTML = `<div style="color:#dc2626; padding:10px; background:#fee2e2; border-radius:6px;">❌ ${res.message}</div>`;
+        }
+      })
+      .catch(() => {
+        box.innerHTML = `<div style="color:#dc2626;">सर्वर से संपर्क नहीं हो पाया। कृपया बाद में प्रयास करें।</div>`;
+      });
+    }
+  </script>
+</body>
+</html>
